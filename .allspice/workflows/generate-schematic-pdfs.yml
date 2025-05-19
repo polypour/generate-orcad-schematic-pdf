@@ -1,0 +1,32 @@
+# Generate PDFs from schematics in a repo
+name: Generate Schematic PDFs
+on:
+  push:
+
+jobs:
+  generate-schematic-pdfs:
+    runs-on: ubuntu-latest
+    steps:
+      # Check out repository code
+      - name: "[📚->🖥️] Check out repository code"
+        uses: actions/checkout@v3
+
+      - name: "[🔎->📂] List files in repo 🔎"
+        run: |
+          ls -la ${{ allspice.workspace }}
+
+      # Installs python requirements from the requirements.txt file
+      - name: "[🤼->🖥️] Install python requirements"
+        run: pip install -r .allspice/utils/requirements.txt
+
+      # Generate PDFs for schematic files in the repository
+      - name: Generate Schematic PDFs
+        run: |
+          ALLSPICE_AUTH_TOKEN=${{ secrets.PAT }} python .allspice/utils/generate_design_pdf_orcad.py "${{ allspice.repository }}" "${{ allspice.head_ref || allspice.ref_name }}" "${{ allspice.sha }}" --allspice_hub_url "${{ allspice.server_url }}" --title_block_field "Title" --commit_to_branch
+
+      # Archive the PDFs zip file as an artifact file
+      - name: Archive generated PDFs
+        uses: actions/upload-artifact@v3
+        with:
+          name: pdfs.zip
+          path: pdfs.zip
